@@ -17,20 +17,16 @@ Open [http://localhost:3000](http://localhost:3000) · **Run guide:** [RUN-SERVE
 
 **Admin:** `admin@aptspace.com` / `password` · **Verify:** `npm run verify`
 
-## Local dev vs staging prep (both at once)
-
-You can develop locally **and** prepare staging in parallel — they use **separate env files**:
+## Local development
 
 | Command | Env file | When |
 |---------|----------|------|
+| `npm run setup -- --install` | creates `client/server/.env` | First-time setup |
+| `npm run verify` | `client/server/.env` | Check local setup |
 | `npm run dev` | `client/server/.env` | Daily coding |
-| `npm run setup:staging` | creates `.env.staging` | Start staging prep |
-| `npm run verify:staging` | checks `.env.staging` | Before deploy |
-| `npm run start:staging` | `.env.staging` | Test with real IT values (when ready) |
-| `npm run start:staging:local` | `.env.staging.local` | **Practice staging on your PC** (port 3001) |
-| `npm run docker:up` | Docker | **Practice cloud deploy locally** (port 3000) |
+| `npm run docker:up` | Docker | Optional full-stack practice on your PC (port 3000) |
 
-Cloud VM guide: [deploy/FREE-CLOUD.md](deploy/FREE-CLOUD.md) · **Server dev handoff:** [deploy/ORACLE-PRACTICE-DEPLOY.md](deploy/ORACLE-PRACTICE-DEPLOY.md)
+**Production hosting:** deployed on **Microsoft Azure** via **cPanel** (not managed from this README).
 
 ## Configuration
 
@@ -40,7 +36,7 @@ Required variables: `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `JWT_SECRET`
 
 On startup the server will:
 1. Test the MySQL connection (exit if it fails)
-2. Seed default users if missing (`ENABLE_SEED=true` on first deploy in production)
+2. Seed default users if missing (`ENABLE_SEED=true` on first production boot)
 3. Seed demo users/bookings only when `ENABLE_DEMO_DATA=true` (off by default in production)
 
 ## Project structure
@@ -52,7 +48,7 @@ APSTPACE/
 ├── scripts/
 │   ├── setup.mjs             ← first-time env copy + next-step hints
 │   ├── verify-local.mjs      ← local setup checks
-│   └── run-server.mjs        ← staging / production server launcher
+│   └── run-server.mjs        ← production server launcher
 └── client/
     ├── database/schema.sql
     ├── public/               ← static assets only (marketing + shared files)
@@ -100,28 +96,13 @@ App HTML lives in `client/server/views/`; CSS/JS live under `client/public/asset
 
 Bookings auto-calculate price, season, and check room availability. Soft-deleted bookings return **404** on GET-by-id (list endpoints already exclude them).
 
-## Project status (~90% complete)
+## Project status
 
-| Area | Done | Notes |
-|------|------|-------|
-| Room bookings | ~93% | Single + group flows, availability, stay-quote, per-day meals, booking refs |
-| Guest portal | ~93% | Browse + detail views, multi-room requests, billing, prefs, live bell feed |
-| Auth & email | ~92% | Login lockout, single session, page httpOnly cookie, forgot/reset; needs production SMTP |
-| Admin UX | ~92% | Dashboard, reservations hub, venues, billing, calendar, View-Only Admin, recycle bin |
-| Docs | ~90% | README, RUN-SERVER, staging/cloud/security deploy guides |
-| Facilities / venues | ~90% | Catalog + venue bookings + wizards; stock photos still used in places |
-| Payments / billing | ~88% | Invoices, receipts, convert/revert overnight; no online payment gateway (by design) |
-| Security | ~82% | Helmet, rate limits, role guards, env validation; see Security notes for go-live gaps |
-| Testing / CI | ~75% | Unit + MySQL integration on GitHub Actions; deeper E2E still thin |
-| Deployment / ops | ~65% | Docker, PM2, staging scripts ready; live IT staging not validated yet |
+Core product modules are in place: room and group bookings, guest portal, auth and email flows, admin UX (dashboard, reservations, venues, billing, calendar, View-Only Admin, recycle bin), facilities/venues catalog, and office settlement payments (Cash / GCash / Bank Transfer — no online payment gateway by design).
 
-**Product overall ~90% · production-ready ~80%** (blocked mainly on IT: DB, SSL, SMTP, staging smoke test).
+**Recently shipped:** View-Only Admin role + read-only UI/API guards; soft-delete recycle bin for reservations and invoices; booking GET-by-id excludes recycled rows; Jul 2026 bug-fix pass (duplicate reservations, per-day meals, stay-quote, Prayer Mountain package, guest stay summary); domain seed migrations under `client/server/src/seed/migrations/`; guest browse redesign; in-app notifications; admin venue modify via wizard.
 
-Core product modules are in place. Remaining work is **go-live validation and hardening**, not missing major feature areas.
-
-**Still in progress:** IT staging deploy, production SMTP validation, API JWT fully on httpOnly cookies, tighter CSP (local Tailwind), deeper automated tests.
-
-**Recently shipped:** View-Only Admin role + read-only UI/API guards; soft-delete recycle bin for reservations and invoices; booking GET-by-id excludes recycled rows (CI fix); Jul 2026 bug-fix pass (duplicate reservations, per-day meals, stay-quote, Prayer Mountain package, guest stay summary); domain seed migrations under `client/server/src/seed/migrations/`; guest browse redesign; in-app notifications; admin venue modify via wizard.
+**Production:** hosted on **Azure** with **cPanel**.
 
 ## Automated tests
 
@@ -159,96 +140,7 @@ Reservation-related emails (approvals, declines, modifications, invoices, receip
 | Payment receipt | Admin records payment |
 | Support message | Guest submits support form (to `SUPPORT_EMAIL`) |
 
-Verify SMTP before deploy: `node client/server/scripts/validate-smtp.mjs --send-test`
-
-## Production deployment
-
-### 1. Server requirements
-
-- Node.js 18+
-- MySQL 8+ (local or managed, e.g. RDS, PlanetScale, Azure MySQL)
-- Reverse proxy with TLS (nginx, Caddy, or cloud load balancer)
-- SMTP for password reset and guest-access emails
-
-### 2. Environment (`client/server/.env`)
-
-Set at minimum:
-
-```env
-NODE_ENV=production
-HOST=0.0.0.0
-PORT=3000
-
-DB_HOST=your-db-host
-DB_USER=aptspace_app
-DB_PASSWORD=strong-db-password
-DB_NAME=aptspace
-DB_SSL=true
-
-JWT_SECRET=<48+ char random hex>
-APP_URL=https://aptspace.yourdomain.edu
-ALLOWED_ORIGIN=https://aptspace.yourdomain.edu
-
-SMTP_HOST=...
-SMTP_PORT=587
-SMTP_USER=...
-SMTP_PASS=...
-SMTP_FROM=noreply@yourdomain.edu
-```
-
-Generate a JWT secret:
-
-```bash
-node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
-```
-
-### 3. First deploy bootstrap
-
-```bash
-mysql -h DB_HOST -u DB_USER -p < client/database/schema.sql
-npm run install:server
-
-# One-time: create admin users (then remove ENABLE_SEED from .env)
-ENABLE_SEED=true npm start
-```
-
-Demo bookings are **not** loaded in production unless `ENABLE_DEMO_DATA=true`.
-
-### 4. Run with PM2 (recommended)
-
-```bash
-mkdir -p logs
-pm2 start ecosystem.config.cjs --env production
-pm2 save
-```
-
-The server listens on `0.0.0.0:PORT`, handles `SIGTERM` gracefully, and closes the MySQL pool on shutdown.
-
-### 5. Reverse proxy (nginx sketch)
-
-```nginx
-server {
-  listen 443 ssl;
-  server_name aptspace.yourdomain.edu;
-
-  location / {
-    proxy_pass http://127.0.0.1:3000;
-    proxy_http_version 1.1;
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-  }
-}
-```
-
-`trust proxy` is enabled automatically when `NODE_ENV=production`.
-
-See `deploy/apache-proxy.example.conf` for a starter Apache config to hand to IT.
-
-### 6. Health monitoring
-
-`GET /api/health` — use for uptime checks. Returns 503 if MySQL is down.
+Verify SMTP: `node client/server/scripts/validate-smtp.mjs --send-test`
 
 ## Security notes
 
@@ -265,10 +157,8 @@ See `deploy/apache-proxy.example.conf` for a starter Apache config to hand to IT
 
 **Implemented:** user IDOR guard, production seed guard, env validation, page auth middleware, single-session login, login lockout, httpOnly cookie for page routes, generic 500 errors in production.
 
-**Still recommended before go-live:**
-- Staging deploy + smoke test with IT (see `deploy/STAGING.md`)
+**Still recommended:**
 - Production SMTP (`SMTP_*` in `.env`) — password reset and booking emails will not deliver without it
-- Put nginx/Cloudflare in front with HTTPS and WAF
 - Use host env vars or a secrets manager (not committed `.env`)
 - Expand automated tests (booking CRUD, guest-access, guest-modify emails)
 - Move API JWT fully off `localStorage` (httpOnly cookie exists for pages only)
