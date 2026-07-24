@@ -26,7 +26,7 @@ Open [http://localhost:3000](http://localhost:3000) · **Run guide:** [RUN-SERVE
 | `npm run dev` | `client/server/.env` | Daily coding |
 | `npm run docker:up` | Docker | Optional full-stack practice on your PC (port 3000) |
 
-**Production hosting:** deployed on **Microsoft Azure** via **cPanel** (not managed from this README).
+**Production hosting:** deployed on **hosting.com** via **cPanel** (not managed from this README).
 
 ## Configuration
 
@@ -102,7 +102,7 @@ Core product modules are in place: room and group bookings, guest portal, auth a
 
 **Recently shipped:** View-Only Admin role + read-only UI/API guards; soft-delete recycle bin for reservations and invoices; booking GET-by-id excludes recycled rows; Jul 2026 bug-fix pass (duplicate reservations, per-day meals, stay-quote, Prayer Mountain package, guest stay summary); domain seed migrations under `client/server/src/seed/migrations/`; guest browse redesign; in-app notifications; admin venue modify via wizard.
 
-**Production:** hosted on **Azure** with **cPanel**.
+**Production:** hosted on **hosting.com** with **cPanel**.
 
 ## Automated tests
 
