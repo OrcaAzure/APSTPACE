@@ -39,6 +39,9 @@ export function renderPhotoThumbs(images, { canManage, uploading, attrPrefix, al
     return `
       <figure class="mf-photo-thumb" role="listitem">
         <img src="${escapeHtml(src)}" alt="${escapeHtml(altText)}" loading="lazy" decoding="async" />
+        <button type="button" class="mf-photo-expand" data-photo-expand aria-label="View photo fullscreen">
+          <span class="material-symbols-outlined" aria-hidden="true">fullscreen</span>
+        </button>
         ${canManage ? `
           <div class="mf-photo-actions">
             <label class="mf-photo-replace" title="Replace photo">

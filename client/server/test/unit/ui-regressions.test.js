@@ -87,6 +87,18 @@ describe('guest and billing UI regressions', () => {
     assert.doesNotMatch(settingsPage, /id="settings-policies-modal"/);
     assert.match(settingsPage, /settings-subsection js-readonly-allow[\s\S]*settings-password-btn/);
     assert.match(settingsPage, /id="settings-password-btn"[^>]*js-readonly-allow/);
+    const venueWizard = readPublic('assets/js/features/venue-booking-wizard.js');
+    const roomWizard = readPublic('assets/js/features/reservation-wizard.js');
+    const groupWizard = readPublic('assets/js/features/group-reservation-wizard.js');
+    assert.match(venueWizard, /Email <span class="res-label-optional">\(optional\)/);
+    assert.match(venueWizard, /isInvalidOptionalEmail\(state\.email\)/);
+    assert.match(venueWizard, /validateVenueDurationClient\([\s\S]*enforceMinHours:\s*false/);
+    assert.doesNotMatch(venueWizard, /id="vbw-email"[^>]*required/);
+    assert.match(roomWizard, /Email <span class="res-label-optional">\(optional\)/);
+    assert.match(roomWizard, /isInvalidOptionalEmail\(state\.email\)/);
+    assert.doesNotMatch(roomWizard, /id="wiz-email"[^>]*required/);
+    assert.match(groupWizard, /Email <span class="res-label-optional">\(optional\)/);
+    assert.match(groupWizard, /isInvalidOptionalEmail\(state\.email\)/);
   });
 
   it('keeps authenticated guest navigation on public information pages', () => {
@@ -150,5 +162,25 @@ describe('guest and billing UI regressions', () => {
     assert.match(landingCss, /@media \(min-width: 768px\)[\s\S]*\.lp-mobile-menu[\s\S]*display:\s*none !important/);
     assert.match(loginPage, /\.password-field__toggle\s*\{[\s\S]*position:\s*absolute/);
     assert.doesNotMatch(loginPage, /\.password-field__toggle\s*\{[\s\S]*position:\s*relative/);
+  });
+
+  it('ships a shared fullscreen photo lightbox for guest browse and admin galleries', () => {
+    const lightbox = readPublic('assets/js/features/photo-lightbox.js');
+    const photoGrid = readPublic('assets/js/features/photo-grid-ui.js');
+    const browse = readPublic('assets/js/features/guest-facilities-browse.js');
+    const ui = readPublic('assets/js/layout/ui.js');
+    const guestFacilities = fs.readFileSync(path.join(serverRoot, 'views/guest/facilities.html'), 'utf8');
+    const guestCss = readPublic('assets/css/global/guest-portal.css');
+    const adminCss = readPublic('assets/css/global/main.css');
+    assert.match(lightbox, /export function openPhotoLightbox/);
+    assert.match(lightbox, /export function initPhotoLightbox/);
+    assert.match(photoGrid, /data-photo-expand/);
+    assert.match(browse, /openPhotoLightbox/);
+    assert.match(browse, /data-preview-fullscreen/);
+    assert.match(browse, /isPhotoLightboxOpen\(\)/);
+    assert.match(ui, /initPhotoLightbox/);
+    assert.match(guestFacilities, /data-preview-fullscreen/);
+    assert.match(guestCss, /photo-lightbox\.css/);
+    assert.match(adminCss, /photo-lightbox\.css/);
   });
 });

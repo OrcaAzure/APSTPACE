@@ -262,13 +262,14 @@ export function validateVenueCapacityClient(space, guestCount) {
   return null;
 }
 
-/**
  * Client-side minimum-hours check (mirrors server validateVenueDuration).
  * @param {{ min_hours?: number|null, minHours?: number|null, package_name?: string, item?: string }} space
+ * @param {{ enforceMinHours?: boolean }} [options] — false for admin venue bookings
  */
-export function validateVenueDurationClient(space, startTime, endTime) {
+export function validateVenueDurationClient(space, startTime, endTime, { enforceMinHours = true } = {}) {
   const hours = venueDurationHours(startTime, endTime);
   if (hours <= 0) return 'End time must be after start time.';
+  if (!enforceMinHours) return null;
   let minHours = toOptionalInt(space?.min_hours ?? space?.minHours);
   if (minHours === 1) minHours = null;
   if (minHours == null || minHours <= 1) {

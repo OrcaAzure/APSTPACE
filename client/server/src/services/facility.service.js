@@ -289,7 +289,7 @@ export function isHourlyMinimumVenue(facility) {
 /**
  * Total venue price — catalog rate is always **per hour**.
  * Recreation / basketball / playground: no minimum block; bill hours × rate.
- * Other venues: validateVenueDuration enforces admin-configured min_hours (default 4).
+ * Other venues: validateVenueDuration enforces min_hours for guests; admins may override.
  */
 export function computeVenueTotal(facility, startTime, endTime) {
   const rate = Number(facility?.rate);
@@ -314,10 +314,10 @@ export function validateVenueCapacity(facilityRow, guestCount) {
   return null;
 }
 
-export function validateVenueDuration(facility, startTime, endTime) {
+export function validateVenueDuration(facility, startTime, endTime, { enforceMinHours = true } = {}) {
   const hours = bookingDurationHours(startTime, endTime);
   if (hours <= 0) return 'End time must be after start time.';
-  if (isRecreationVenue(facility)) return null;
+  if (!enforceMinHours || isRecreationVenue(facility)) return null;
   const minHours = resolveMinHours(facility);
   if (minHours && hours < minHours) {
     return `This venue has a ${minHours}-hour minimum booking. Please select at least ${minHours} hours.`;

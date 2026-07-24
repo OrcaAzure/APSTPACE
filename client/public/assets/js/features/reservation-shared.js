@@ -8,7 +8,7 @@ export const MEAL_MAX_QTY = 9999;
 /** Dorm nightly rate — priced with the room, not as a booking add-on. */
 export const PER_PERSON_NIGHT_EXTRA_ITEM = 'Per person per Night';
 
-/** Basic email check for admin create/edit wizards (guest email is required). */
+/** Basic email format check when a value is provided. */
 export function isValidEmail(value) {
   const v = String(value ?? '').trim();
   if (!v) return false;

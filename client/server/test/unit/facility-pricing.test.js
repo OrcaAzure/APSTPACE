@@ -32,5 +32,6 @@ describe('facility pricing — per-hour catalog rates', () => {
     assert.equal(computeVenueTotal(chapel, '09:00', '13:00'), 4000);
     assert.equal(computeVenueTotal(chapel, '09:00', '14:00'), 5000);
     assert.match(validateVenueDuration(chapel, '09:00', '11:00'), /4-hour minimum/);
+    assert.equal(validateVenueDuration(chapel, '09:00', '11:00', { enforceMinHours: false }), null);
   });
 });

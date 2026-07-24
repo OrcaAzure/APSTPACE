@@ -6,7 +6,7 @@ import {
   createFacilityBooking, getFacilitiesOverview, getFacilityBookingById, getUsers,
   getVenueRateQuote, updateFacilityBooking, checkVenueSlotAvailability,
 } from '/assets/js/services/api.js';
-import { escapeHtml, formatDateLong, formatMoney, isValidEmail } from '/assets/js/features/reservation-shared.js';
+import { escapeHtml, formatDateLong, formatMoney, isInvalidOptionalEmail } from '/assets/js/features/reservation-shared.js';
 import { venuePreviewImage } from '/assets/js/features/facility-display.js';
 import {
   validateVenueCapacityClient,
@@ -316,9 +316,9 @@ function renderStep1() {
     <label class="res-label">Select existing guest (optional)</label>
     <select id="vbw-user" class="res-input"><option value="">— Type new guest below —</option>${opts}</select>
     <label class="res-label" for="vbw-name">Guest name</label>
-    <input id="vbw-name" class="res-input" type="text" value="${escapeHtml(state.guestName)}" placeholder="Full name" required />
-    <label class="res-label" for="vbw-email">Email <span class="res-label-required">(required)</span></label>
-    <input id="vbw-email" class="res-input" type="email" value="${escapeHtml(state.email)}" placeholder="email@example.com" autocomplete="email" required />
+    <input id="vbw-name" class="res-input" type="text" value="${escapeHtml(state.guestName)}" placeholder="Full name" />
+    <label class="res-label" for="vbw-email">Email <span class="res-label-optional">(optional)</span></label>
+    <input id="vbw-email" class="res-input" type="text" inputmode="email" autocomplete="email" value="${escapeHtml(state.email)}" placeholder="email@example.com" />
     <label class="res-label" for="vbw-phone">Contact number <span class="res-label-optional">(optional)</span></label>
     <input id="vbw-phone" class="res-input" type="tel" value="${escapeHtml(state.contactPhone)}" placeholder="09XX XXX XXXX" autocomplete="tel" />`;
 }
@@ -727,7 +727,9 @@ function renderBody() {
 
 function validateStep1() {
   if (!state.guestName && !state.userId) return 'Please enter a guest name.';
-  if (!isValidEmail(state.email)) return 'Please enter a valid email address for the guest.';
+  if (isInvalidOptionalEmail(state.email)) {
+    return 'Please enter a valid email address, or leave the field blank.';
+  }
   return '';
 }
 
@@ -743,7 +745,7 @@ function validateStep2() {
   const use = selectedUse() || selectedVenue();
   const capacityError = validateVenueCapacityClient(use, state.guestCount);
   if (capacityError) return capacityError;
-  const durationError = validateVenueDurationClient(use, state.startTime, state.endTime);
+  const durationError = validateVenueDurationClient(use, state.startTime, state.endTime, { enforceMinHours: false });
   if (durationError) return durationError;
 
   if (state.slotCheck.checked && !state.slotCheck.available) {
@@ -781,7 +783,7 @@ async function goNext() {
       || (state.endTime <= state.startTime && 'End time must be after start time.')
       || (state.guestCount < 1 && 'Guest count must be at least 1.')
       || validateVenueCapacityClient(use, state.guestCount)
-      || validateVenueDurationClient(use, state.startTime, state.endTime);
+      || validateVenueDurationClient(use, state.startTime, state.endTime, { enforceMinHours: false });
     if (ruleError) {
       showError(ruleError);
       return;

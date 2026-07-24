@@ -134,7 +134,7 @@ function renderStep1() {
     <label class="res-label" for="wiz-name">Guest name</label>
     <input id="wiz-name" class="res-input" type="text" value="${escapeHtml(state.guestName)}" placeholder="Full name" />
     <label class="res-label" for="wiz-email">Email <span class="res-label-optional">(optional)</span></label>
-    <input id="wiz-email" class="res-input" type="email" value="${escapeHtml(state.email)}" placeholder="email@example.com" autocomplete="email" />
+    <input id="wiz-email" class="res-input" type="text" inputmode="email" autocomplete="email" value="${escapeHtml(state.email)}" placeholder="email@example.com" />
     <label class="res-label" for="wiz-phone">Contact number <span class="res-label-optional">(optional)</span></label>
     <input id="wiz-phone" class="res-input" type="tel" value="${escapeHtml(state.contactPhone)}" placeholder="09XX XXX XXXX" autocomplete="tel" />`;
 }
@@ -816,7 +816,7 @@ async function confirmSave() {
   const payload = {
     user_id: state.guestModify ? undefined : (state.userId ? Number(state.userId) : undefined),
     guest_name: state.guestModify ? undefined : state.guestName,
-    email: state.guestModify ? undefined : state.email,
+    email: state.guestModify ? undefined : (state.email?.trim() || undefined),
     room_id: Number(state.roomId),
     check_in: state.checkIn,
     check_out: state.checkOut,

@@ -161,7 +161,7 @@ function renderStep1() {
     <label class="res-label" for="gw-contact">Contact person</label>
     <input id="gw-contact" class="res-input" type="text" value="${escapeHtml(state.contactName)}" placeholder="Full name" />
     <label class="res-label" for="gw-email">Email <span class="res-label-optional">(optional)</span></label>
-    <input id="gw-email" class="res-input" type="email" value="${escapeHtml(state.email)}" placeholder="email@example.com" autocomplete="email" />
+    <input id="gw-email" class="res-input" type="text" inputmode="email" autocomplete="email" value="${escapeHtml(state.email)}" placeholder="email@example.com" />
     <label class="res-label" for="gw-phone">Contact number <span class="res-label-optional">(optional)</span></label>
     <input id="gw-phone" class="res-input" type="tel" value="${escapeHtml(state.contactPhone)}" placeholder="09XX XXX XXXX" autocomplete="tel" />`;
 }
@@ -928,7 +928,7 @@ async function confirmSave() {
     group_name: state.groupName,
     contact_name: state.contactName,
     contact_phone: state.contactPhone || undefined,
-    contact_email: state.email,
+    contact_email: state.email?.trim() || undefined,
     user_id: state.guestModify ? undefined : (state.userId ? Number(state.userId) : undefined),
     check_in: state.checkIn,
     check_out: state.checkOut,

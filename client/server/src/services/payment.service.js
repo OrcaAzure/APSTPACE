@@ -266,7 +266,7 @@ export async function revertVenueOvernightBilling(paymentId, payload = {}) {
       const rateRow = await resolveVenueFacilityRowByFacilityId(facilityId, nextDate);
       if (!rateRow) throw new Error('Venue space not found');
 
-      const durationError = validateVenueDuration(rateRow, nextStart, nextEnd);
+      const durationError = validateVenueDuration(rateRow, nextStart, nextEnd, { enforceMinHours: false });
       if (durationError) throw new Error(durationError);
 
       const capacityError = validateVenueCapacity(rateRow, nextGuests);
@@ -315,7 +315,7 @@ export async function revertVenueOvernightBilling(paymentId, payload = {}) {
       const rateRow = await resolveVenueFacilityRowByFacilityId(facilityId, nextDate);
       if (!rateRow) throw new Error('Venue space not found');
 
-      const durationError = validateVenueDuration(rateRow, nextStart, nextEnd);
+      const durationError = validateVenueDuration(rateRow, nextStart, nextEnd, { enforceMinHours: false });
       if (durationError) throw new Error(durationError);
 
       const capacityError = validateVenueCapacity(rateRow, nextGuests);
@@ -1442,7 +1442,7 @@ export async function convertPaymentReservationKind(paymentId, payload = {}) {
       if (!identity) throw new Error('Venue space not found');
 
       const { row: rateRow } = identity;
-      const durationError = validateVenueDuration(rateRow, startTime, endTime);
+      const durationError = validateVenueDuration(rateRow, startTime, endTime, { enforceMinHours: false });
       if (durationError) throw new Error(durationError);
 
       const capacityError = validateVenueCapacity(rateRow, guest_count || payment.guest_count || 1);
