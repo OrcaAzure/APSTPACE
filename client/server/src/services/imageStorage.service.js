@@ -25,7 +25,7 @@ export const PUBLIC_DIR = path.join(__dirname, '../../../public');
 
 /* Shared upload constraints — same limits for rooms and facilities. */
 export const IMAGE_MAX_COUNT = 6;
-export const IMAGE_MAX_BYTES = 8 * 1024 * 1024; // 8 MB per file
+export const IMAGE_MAX_BYTES = 12 * 1024 * 1024; // 12 MB per file (converted to WebP after upload)
 export const IMAGE_MAX_WIDTH = 1400; // px; larger uploads are downscaled
 export const IMAGE_WEBP_QUALITY = 82;
 
@@ -148,7 +148,7 @@ export function createImageStore({ pathPrefix }) {
       throw new Error('Only JPG and PNG images are allowed.');
     }
     if (file.size > IMAGE_MAX_BYTES) {
-      throw new Error('Each image must be 8 MB or smaller.');
+      throw new Error(`Each image must be ${IMAGE_MAX_BYTES / (1024 * 1024)} MB or smaller.`);
     }
 
     const filename = `${Date.now()}-${crypto.randomBytes(4).toString('hex')}.webp`;

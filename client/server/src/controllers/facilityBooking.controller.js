@@ -131,7 +131,7 @@ export const createFacilityBooking = async (req, res) => {
     const { row: rateRow } = identity;
     const catalogFacilityId = identity.facility_id;
 
-    const durationError = validateVenueDuration(rateRow, startTime, endTime);
+    const durationError = validateVenueDuration(rateRow, startTime, endTime, { enforceMinHours: !isAdmin });
     if (durationError) {
       return res.status(400).json({ message: durationError });
     }
@@ -357,7 +357,7 @@ export const updateFacilityBooking = async (req, res) => {
           return res.status(404).json({ message: 'Venue space not found' });
         }
 
-        const durationError = validateVenueDuration(rateRow, nextStart, nextEnd);
+        const durationError = validateVenueDuration(rateRow, nextStart, nextEnd, { enforceMinHours: false });
         if (durationError) return res.status(400).json({ message: durationError });
 
         const capacityError = validateVenueCapacity(rateRow, nextGuests);
@@ -543,7 +543,8 @@ export const checkVenueSlotAvailability = async (req, res) => {
     });
 
     const { row: rateRow } = identity;
-    const durationError = validateVenueDuration(rateRow, startTime, endTime);
+    const enforceMinHours = !isAdminRole(req.user?.role);
+    const durationError = validateVenueDuration(rateRow, startTime, endTime, { enforceMinHours });
     const estimatedTotal = computeVenueTotal(rateRow, startTime, endTime);
     const rateMeta = venueRateMeta(rateRow);
     const hours = bookingDurationHours(startTime, endTime);

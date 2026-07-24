@@ -20,6 +20,7 @@ import { initManageVenuesModal, isManageVenuesModalOpen, closeManageVenuesModal 
 import { initReservationWizard, isReservationWizardOpen, closeReservationWizard } from '/assets/js/features/reservation-wizard.js';
 import { initGroupWizard, isGroupWizardOpen, closeGroupWizard } from '/assets/js/features/group-reservation-wizard.js';
 import { initVenueBookingWizard, isVenueBookingWizardOpen, closeVenueBookingWizard } from '/assets/js/features/venue-booking-wizard.js';
+import { initPhotoLightbox, isPhotoLightboxOpen, closePhotoLightbox } from '/assets/js/features/photo-lightbox.js';
 import { initTabGroup, switchTabPanel } from '/assets/js/layout/tabs.js';
 import { initAdminEnhancements, lockStaticChrome, releaseChromeBoot, animateDrawerOpen, animateModalOpen, animateNotificationsPanel } from '/assets/js/layout/animations.js';
 import { initAdminPageNavTransitions, initGuestPageNavTransitions } from '/assets/js/layout/page-transitions.js';
@@ -266,9 +267,11 @@ function ensureGuestWizardStyles() {
 }
 
 if (typeof window !== 'undefined') {
-  ensureBootLoader();
   const path = window.location.pathname;
+  // Boot loader is portal chrome — public pages import ui.js for helpers
+  // (e.g. loadComponent) and must not show the loading overlay.
   if (path.includes('/admin/') || path.includes('/guest/')) {
+    ensureBootLoader();
     scheduleShellBootFallback();
   }
 }
@@ -870,6 +873,7 @@ function syncSidebarToggleUi() {
 }
 
 function bindLayoutEvents({ isGuest = false } = {}) {
+  initPhotoLightbox();
   if (!isGuest) initAdminUserMenu();
 
   document.querySelectorAll('[data-action="logout"]').forEach((btn) => {
@@ -892,6 +896,10 @@ function bindLayoutEvents({ isGuest = false } = {}) {
 
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
+      if (isPhotoLightboxOpen()) {
+        closePhotoLightbox();
+        return;
+      }
       if (!isGuest && isManageRequestsModalOpen()) {
         closeManageRequestsModal();
         return;

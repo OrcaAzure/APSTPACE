@@ -29,6 +29,14 @@ describe('guest and billing UI regressions', () => {
     assert.doesNotMatch(groupWizard, /gw-arrival-time/);
   });
 
+  it('omits check-in/out notice on venue browse surfaces', () => {
+    const browse = readPublic('assets/js/features/guest-facilities-browse.js');
+    const policy = readPublic('assets/js/constants/booking-policy.js');
+    assert.match(browse, /vbm-price-notice.*includeCheckInOut:\s*false/s);
+    assert.match(browse, /paintBrowsePriceNotice/);
+    assert.match(policy, /includeCheckInOut = true/);
+  });
+
   it('includes Meet the Team in the shared guest footer', () => {
     const footer = readPublic('components/guest-footer.html');
     assert.match(footer, /meet-the-team\.html/);
@@ -77,6 +85,20 @@ describe('guest and billing UI regressions', () => {
     assert.match(policyEditor, /policy-section-card/);
     assert.match(settingsPage, /id="policy-editor-mount"/);
     assert.doesNotMatch(settingsPage, /id="settings-policies-modal"/);
+    assert.match(settingsPage, /settings-subsection js-readonly-allow[\s\S]*settings-password-btn/);
+    assert.match(settingsPage, /id="settings-password-btn"[^>]*js-readonly-allow/);
+    const venueWizard = readPublic('assets/js/features/venue-booking-wizard.js');
+    const roomWizard = readPublic('assets/js/features/reservation-wizard.js');
+    const groupWizard = readPublic('assets/js/features/group-reservation-wizard.js');
+    assert.match(venueWizard, /Email <span class="res-label-optional">\(optional\)/);
+    assert.match(venueWizard, /isInvalidOptionalEmail\(state\.email\)/);
+    assert.match(venueWizard, /validateVenueDurationClient\([\s\S]*enforceMinHours:\s*false/);
+    assert.doesNotMatch(venueWizard, /id="vbw-email"[^>]*required/);
+    assert.match(roomWizard, /Email <span class="res-label-optional">\(optional\)/);
+    assert.match(roomWizard, /isInvalidOptionalEmail\(state\.email\)/);
+    assert.doesNotMatch(roomWizard, /id="wiz-email"[^>]*required/);
+    assert.match(groupWizard, /Email <span class="res-label-optional">\(optional\)/);
+    assert.match(groupWizard, /isInvalidOptionalEmail\(state\.email\)/);
   });
 
   it('keeps authenticated guest navigation on public information pages', () => {
@@ -103,5 +125,62 @@ describe('guest and billing UI regressions', () => {
     assert.match(landing, /data-contact-telephone/);
     assert.match(contacts, /data-contact-telephone/);
     assert.match(renderer, /getSupportContact/);
+  });
+
+  it('loads tailwind-built.css last in head so utilities win ties (old CDN order)', () => {
+    const pages = [];
+    const collect = (dir) => {
+      fs.readdirSync(dir, { withFileTypes: true }).forEach((entry) => {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) collect(full);
+        else if (entry.name.endsWith('.html')) pages.push(full);
+      });
+    };
+    collect(publicRoot);
+    collect(path.join(serverRoot, 'views'));
+
+    pages.forEach((page) => {
+      const html = fs.readFileSync(page, 'utf8');
+      const head = html.split('</head>')[0];
+      const tailwindAt = head.indexOf('tailwind-built.css');
+      if (tailwindAt === -1) return;
+      const afterTailwind = head.slice(tailwindAt);
+      assert.doesNotMatch(
+        afterTailwind,
+        /<link[^>]+rel="stylesheet"|<style/,
+        `${page} loads other CSS after tailwind-built.css — utilities must come last`,
+      );
+    });
+  });
+
+  it('leads the hero carousel with room 416 and keeps mobile nav scoped', () => {
+    const landingContent = readPublic('assets/js/layout/landing-content.js');
+    const landingCss = readPublic('assets/css/global/landing.css');
+    const loginPage = fs.readFileSync(path.join(serverRoot, 'views/auth/login.html'), 'utf8');
+    assert.match(landingContent, /HERO_CAROUSEL_IMAGES\s*=\s*\[\s*\n\s*'\/images\/416Preview5\.webp'/);
+    assert.match(landingCss, /@media \(max-width: 767px\)[\s\S]*\.lp-mobile-menu:not\(\.hidden\)/);
+    assert.match(landingCss, /@media \(min-width: 768px\)[\s\S]*\.lp-mobile-menu[\s\S]*display:\s*none !important/);
+    assert.match(loginPage, /\.password-field__toggle\s*\{[\s\S]*position:\s*absolute/);
+    assert.doesNotMatch(loginPage, /\.password-field__toggle\s*\{[\s\S]*position:\s*relative/);
+  });
+
+  it('ships a shared fullscreen photo lightbox for guest browse and admin galleries', () => {
+    const lightbox = readPublic('assets/js/features/photo-lightbox.js');
+    const photoGrid = readPublic('assets/js/features/photo-grid-ui.js');
+    const browse = readPublic('assets/js/features/guest-facilities-browse.js');
+    const ui = readPublic('assets/js/layout/ui.js');
+    const guestFacilities = fs.readFileSync(path.join(serverRoot, 'views/guest/facilities.html'), 'utf8');
+    const guestCss = readPublic('assets/css/global/guest-portal.css');
+    const adminCss = readPublic('assets/css/global/main.css');
+    assert.match(lightbox, /export function openPhotoLightbox/);
+    assert.match(lightbox, /export function initPhotoLightbox/);
+    assert.match(photoGrid, /data-photo-expand/);
+    assert.match(browse, /openPhotoLightbox/);
+    assert.match(browse, /data-preview-fullscreen/);
+    assert.match(browse, /isPhotoLightboxOpen\(\)/);
+    assert.match(ui, /initPhotoLightbox/);
+    assert.match(guestFacilities, /data-preview-fullscreen/);
+    assert.match(guestCss, /photo-lightbox\.css/);
+    assert.match(adminCss, /photo-lightbox\.css/);
   });
 });

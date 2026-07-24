@@ -1,6 +1,7 @@
 /**
  * Guest portal — full landing layout for home, contained layout for app pages.
  */
+@import '../features/photo-lightbox.css';
 
 body.guest-shell {
   min-height: 100vh;
@@ -1447,6 +1448,31 @@ body.browse-preview-open {
 
 .browse-preview__nav--prev { left: 0.75rem; }
 .browse-preview__nav--next { right: 0.75rem; }
+
+.browse-preview__fullscreen {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 2;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #1a202c;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.18);
+}
+
+.browse-preview__fullscreen:hover {
+  background: #fff;
+}
+
+.browse-preview__frame {
+  cursor: zoom-in;
+}
 
 .browse-preview__counter {
   position: absolute;

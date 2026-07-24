@@ -46,6 +46,7 @@ import { requireAuth, applyRoleUI } from '/assets/js/services/auth.js';
     formatVenueDisplayName,
   } from '/assets/js/features/facility-display.js';
   import { initVenueTimeSelects } from '/assets/js/features/venue-time-select.js';
+  import { openPhotoLightbox, isPhotoLightboxOpen } from '/assets/js/features/photo-lightbox.js';
   import {
     addBookingRequestItem,
     sharedStayDates,
@@ -92,8 +93,13 @@ function setMountHtml(id, html) {
     activeCategoryLabel.textContent = `Selected · ${getBrowseCategoryMeta(selectedCategory, isInternal).label}`;
   }
 
-  setMountHtml('browse-price-notice', priceNoticeHtml());
-  setMountHtml('vbm-price-notice', priceNoticeHtml('mt-1'));
+  function paintBrowsePriceNotice() {
+    const includeCheckInOut = categoryShowsRooms(selectedCategory);
+    setMountHtml('browse-price-notice', priceNoticeHtml('', { includeCheckInOut }));
+  }
+
+  paintBrowsePriceNotice();
+  setMountHtml('vbm-price-notice', priceNoticeHtml('mt-1', { includeCheckInOut: false }));
   setMountHtml('booking-price-notice', priceNoticeHtml());
   setMountHtml('guest-access-notice', guestAccessNoticeHtml(isInternal));
 
@@ -453,6 +459,7 @@ function setMountHtml(id, html) {
     updateBrowseHeadings();
     applyCategoryVisibility();
     updateRoomBrowseVisibility();
+    paintBrowsePriceNotice();
   }
 
   function setSelectedCategory(categoryId, { scroll = false } = {}) {
@@ -1643,9 +1650,23 @@ function setMountHtml(id, html) {
     openBrowsePreview();
   }
 
+  function openPreviewFullscreen() {
+    if (!previewState.images.length) return;
+    openPhotoLightbox({
+      images: previewState.images,
+      index: previewState.index,
+      alt: previewTitle?.textContent?.trim() || 'Photo',
+    });
+  }
+
   previewModal?.addEventListener('click', (e) => {
     if (e.target.closest('[data-preview-close]')) {
       closeBrowsePreview();
+      return;
+    }
+    if (e.target.closest('[data-preview-fullscreen]') || e.target.closest('.browse-preview__frame')) {
+      if (e.target.closest('[data-preview-prev], [data-preview-next]')) return;
+      openPreviewFullscreen();
       return;
     }
     if (e.target.closest('[data-refresh-stay-search]')) {
@@ -1706,6 +1727,7 @@ function setMountHtml(id, html) {
 
   document.addEventListener('keydown', (e) => {
     if (previewModal?.hidden) return;
+    if (isPhotoLightboxOpen()) return;
     if (e.key === 'Escape') {
       closeBrowsePreview();
       return;
