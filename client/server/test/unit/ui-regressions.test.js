@@ -9,6 +9,13 @@ const publicRoot = path.resolve(serverRoot, '../public');
 const readPublic = (relativePath) => fs.readFileSync(path.join(publicRoot, relativePath), 'utf8');
 
 describe('guest and billing UI regressions', () => {
+  it('parses guest-booking-flow.js without syntax errors (admin + guest import chain)', () => {
+    const filePath = path.join(publicRoot, 'assets/js/features/guest-booking-flow.js');
+    const source = fs.readFileSync(filePath, 'utf8');
+    assert.match(source, /\}\r?\n\r?\n\/\*\*\r?\n \* Client-side minimum-hours check/);
+    assert.doesNotMatch(source, /\}\r?\n\r?\n \* Client-side minimum-hours check/);
+  });
+
   it('mounts one shared landing footer for signed-out and signed-in landing content', () => {
     const composer = readPublic('assets/js/layout/landing-content.js');
     const publicPage = readPublic('index.html');
@@ -155,11 +162,17 @@ describe('guest and billing UI regressions', () => {
 
   it('leads the hero carousel with room 416 and keeps mobile nav scoped', () => {
     const landingContent = readPublic('assets/js/layout/landing-content.js');
+    const landingJs = readPublic('assets/js/layout/landing.js');
     const landingCss = readPublic('assets/css/global/landing.css');
     const loginPage = fs.readFileSync(path.join(serverRoot, 'views/auth/login.html'), 'utf8');
     assert.match(landingContent, /HERO_CAROUSEL_IMAGES\s*=\s*\[\s*\n\s*'\/images\/416Preview5\.webp'/);
+    assert.match(landingContent, /ensureHeroBackgroundCarousel/);
+    assert.match(landingJs, /export function ensureHeroBackgroundCarousel/);
+    assert.match(landingJs, /export function revealLandingFallback/);
     assert.match(landingCss, /@media \(max-width: 767px\)[\s\S]*\.lp-mobile-menu:not\(\.hidden\)/);
     assert.match(landingCss, /@media \(min-width: 768px\)[\s\S]*\.lp-mobile-menu[\s\S]*display:\s*none !important/);
+    assert.doesNotMatch(landingCss, /@supports \(-webkit-touch-callout: none\)[\s\S]*@media \(max-width: 767px\)[\s\S]*\.lp-hero[\s\S]*min-height:\s*auto/);
+    assert.match(landingCss, /@media \(max-width: 767px\)[\s\S]*\.lp-hero[\s\S]*min-height:\s*100svh/);
     assert.match(loginPage, /\.password-field__toggle\s*\{[\s\S]*position:\s*absolute/);
     assert.doesNotMatch(loginPage, /\.password-field__toggle\s*\{[\s\S]*position:\s*relative/);
   });

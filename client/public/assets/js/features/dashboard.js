@@ -239,20 +239,35 @@ function applyKpis(kpis, { animate = false } = {}) {
   return Promise.all(values.map(([id, value]) => animateCountUp(document.getElementById(id), value)));
 }
 
+function showDashboardLoadError(message) {
+  const text = message || 'Could not load dashboard data.';
+  ['action-queue-mount', 'today-mount', 'house-mount', 'load-mount'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.innerHTML = `<p class="dashboard-muted">${escapeHtml(text)}</p>`;
+    }
+  });
+}
+
 export async function loadDashboard({ background = false } = {}) {
-  const summary = await getAdminSummary();
-  const { kpis, actionItems, todayBoard, weekOutlook, analytics } = summary;
+  try {
+    const summary = await getAdminSummary();
+    const { kpis, actionItems, todayBoard, weekOutlook, analytics } = summary;
 
-  renderActionQueue(actionItems, kpis, { background });
-  renderTodayBoard(todayBoard, { background });
-  renderHouse(kpis, analytics || {});
-  renderHousekeepingLoad(weekOutlook || [], analytics || {});
+    renderActionQueue(actionItems, kpis, { background });
+    renderTodayBoard(todayBoard, { background });
+    renderHouse(kpis, analytics || {});
+    renderHousekeepingLoad(weekOutlook || [], analytics || {});
 
-  if (background) {
-    await applyKpis(kpis, { animate: false });
-    return;
+    if (background) {
+      await applyKpis(kpis, { animate: false });
+      return;
+    }
+
+    await applyKpis(kpis, { animate: true });
+    revealPageContent();
+  } catch (err) {
+    if (!background) showDashboardLoadError(err.message || 'Could not load dashboard data.');
+    throw err;
   }
-
-  await applyKpis(kpis, { animate: true });
-  revealPageContent();
 }

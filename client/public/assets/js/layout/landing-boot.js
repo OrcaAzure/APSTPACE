@@ -3,7 +3,6 @@
  */
 
 const FAILSAFE_MS = 12000;
-const LANDING_ASSET_V = 'explore-carousel4';
 const REVEAL_FAILSAFE_MS = 3000;
 
 function prefersReducedMotion() {
@@ -26,8 +25,8 @@ async function revealLandingPage(startHeroHandoff) {
   await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 }
 
-async function bootLandingPage({ skipHeroEntrance = true } = {}) {
-  const { initLandingPage } = await import(`/assets/js/layout/landing.js?v=${LANDING_ASSET_V}`);
+async function bootLandingPage({ skipHeroEntrance = true, landingScriptV = 'hero-carousel5' } = {}) {
+  const { initLandingPage } = await import(`/assets/js/layout/landing.js?v=${landingScriptV}`);
   const { redirectIfLoggedIn } = await import('/assets/js/services/auth.js');
   redirectIfLoggedIn().catch(() => {});
 
@@ -35,6 +34,9 @@ async function bootLandingPage({ skipHeroEntrance = true } = {}) {
     if (!document.body.classList.contains('lp-page-hidden')) return;
     console.warn('[landing] reveal failsafe — showing page without waiting for animations');
     clearLandingBlockers();
+    import(`/assets/js/layout/landing.js?v=${landingScriptV}`)
+      .then((mod) => mod.revealLandingFallback?.())
+      .catch(() => {});
   }, REVEAL_FAILSAFE_MS);
 
   try {
@@ -52,8 +54,11 @@ async function boot() {
   const params = new URLSearchParams(window.location.search);
   const skipIntro = params.has('skipIntro') || params.get('intro') === 'skip' || params.get('intro') === '0';
 
+  let landingScriptV = 'hero-carousel5';
+
   try {
-    const { mountPublicLandingContent } = await import('/assets/js/layout/landing-content.js');
+    const { mountPublicLandingContent, LANDING_SCRIPT_V } = await import('/assets/js/layout/landing-content.js');
+    landingScriptV = LANDING_SCRIPT_V;
     await mountPublicLandingContent();
   } catch (err) {
     console.error('[landing] content mount failed:', err);
@@ -62,6 +67,8 @@ async function boot() {
       mount.innerHTML = '<p class="p-8 text-center text-on-surface-variant">Unable to load page content. Please refresh.</p>';
     }
   }
+
+  const bootOpts = { landingScriptV };
 
   if (skipIntro) {
     document.getElementById('lp-preloader')?.remove();
@@ -72,7 +79,7 @@ async function boot() {
       document.body.classList.add('lp-page-hidden');
     }
     try {
-      await bootLandingPage({ skipHeroEntrance: false });
+      await bootLandingPage({ skipHeroEntrance: false, ...bootOpts });
     } catch (err) {
       console.error('[landing] page init failed:', err);
       document.body.classList.remove('lp-page-hidden');
@@ -125,7 +132,7 @@ async function boot() {
   document.body.classList.add('lp-ready');
 
   try {
-    await bootLandingPage({ skipHeroEntrance: true });
+    await bootLandingPage({ skipHeroEntrance: true, ...bootOpts });
   } catch (err) {
     console.error('[landing] page init failed:', err);
     document.body.classList.remove('lp-page-hidden');

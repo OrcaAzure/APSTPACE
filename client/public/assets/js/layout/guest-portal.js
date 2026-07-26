@@ -2,7 +2,7 @@
  * Guest portal chrome — landing-style nav, animations, user menu.
  */
 
-import { initNavScroll, initMobileMenu, initLandingPage } from '/assets/js/layout/landing.js';
+import { initNavScroll, initMobileMenu, initLandingPage } from '/assets/js/layout/landing.js?v=hero-carousel5';
 
 function initGuestUserMenu() {
   const btn = document.getElementById('guest-user-menu-btn');

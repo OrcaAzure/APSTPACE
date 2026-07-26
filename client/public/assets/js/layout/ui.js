@@ -58,7 +58,7 @@ export const GUEST_MOBILE_NAV = [
 ];
 
 const SIDEBAR_COLLAPSED_KEY = 'admin-sidebar-collapsed';
-const TEMPLATE_CACHE_KEY = 'aptspace.admin.templates.v22';
+const TEMPLATE_CACHE_KEY = 'aptspace.admin.templates.v23';
 const COMPONENT_FETCH_MS = 10000;
 const BOOT_LOADER_ID = 'apt-boot-loader';
 const SHELL_BOOT_TIMEOUT_MS = 8000;
@@ -166,28 +166,38 @@ function writeTemplateCache(templates) {
   }
 }
 
+async function loadAdminComponent(url) {
+  try {
+    return await loadComponent(url);
+  } catch (err) {
+    console.error(`[ui] Failed to load admin component ${url}:`, err);
+    return '';
+  }
+}
+
 async function loadAdminTemplates() {
   const cached = readTemplateCache();
   if (cached?.sidebar && cached?.guestAccessModals && cached?.teamAccessModals && cached?.manageVenues) return cached;
 
   if (!templatesPromise) {
     templatesPromise = Promise.all([
-      loadComponent('/components/sidebar.html'),
-      loadComponent('/components/header.html'),
-      loadComponent('/components/drawer.html'),
-      loadComponent('/components/modal.html'),
-      loadComponent('/components/manage-requests-modal.html'),
-      loadComponent('/components/manage-reservations-modal.html'),
-      loadComponent('/components/manage-facilities-modal.html'),
-      loadComponent('/components/manage-venues-modal.html'),
-      loadComponent('/components/reservation-wizard-modal.html'),
-      loadComponent('/components/group-wizard-modal.html'),
-      loadComponent('/components/venue-booking-wizard-modal.html'),
-      loadComponent('/components/manage-venue-bookings-modal.html'),
-      loadComponent('/components/notifications.html'),
-      loadComponent('/components/guest-access-modals.html'),
-      loadComponent('/components/team-access-modals.html'),
+      loadAdminComponent('/components/sidebar.html'),
+      loadAdminComponent('/components/header.html'),
+      loadAdminComponent('/components/drawer.html'),
+      loadAdminComponent('/components/modal.html'),
+      loadAdminComponent('/components/manage-requests-modal.html'),
+      loadAdminComponent('/components/manage-reservations-modal.html'),
+      loadAdminComponent('/components/manage-facilities-modal.html'),
+      loadAdminComponent('/components/manage-venues-modal.html'),
+      loadAdminComponent('/components/reservation-wizard-modal.html'),
+      loadAdminComponent('/components/group-wizard-modal.html'),
+      loadAdminComponent('/components/venue-booking-wizard-modal.html'),
+      loadAdminComponent('/components/manage-venue-bookings-modal.html'),
+      loadAdminComponent('/components/notifications.html'),
+      loadAdminComponent('/components/guest-access-modals.html'),
+      loadAdminComponent('/components/team-access-modals.html'),
     ]).then(([sidebar, header, drawer, modal, manageRequests, manageReservations, manageFacilities, manageVenues, reservationWizard, groupWizard, venueWizard, manageVenueBookings, notifications, guestAccessModals, teamAccessModals]) => {
+      if (!sidebar) throw new Error('Could not load admin sidebar — check that public/components was uploaded.');
       const bundle = {
         sidebar,
         header,

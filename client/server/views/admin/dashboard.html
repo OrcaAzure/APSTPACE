@@ -102,17 +102,27 @@
     import { loadDashboard } from '/assets/js/features/dashboard.js';
     import { createBookingPoll } from '/assets/js/layout/booking-poll.js';
     import { escapeHtml } from '/assets/js/features/reservation-shared.js';
+    import { revealPageContent } from '/assets/js/layout/animations.js';
 
     initSplashIdle({ portal: 'admin' });
     if (!(await requireAuth())) throw new Error('Not authenticated');
 
-    await initAppLayout({
-      portal:     'admin',
-      activePage: 'dashboard',
-      title:      'Dashboard',
-      subtitle:   "Today's overview",
-      deferEnhancements: true,
-    });
+    try {
+      await initAppLayout({
+        portal:     'admin',
+        activePage: 'dashboard',
+        title:      'Dashboard',
+        subtitle:   "Today's overview",
+        deferEnhancements: true,
+      });
+    } catch (layoutErr) {
+      console.error('[dashboard] Shell init failed:', layoutErr);
+      const mount = document.getElementById('page-content');
+      if (mount) {
+        mount.insertAdjacentHTML('afterbegin',
+          `<div class="bg-amber-50 text-amber-900 border border-amber-200 rounded-lg px-4 py-3 text-sm mb-4">${escapeHtml(layoutErr.message || 'Admin layout failed to load. Try a hard refresh (Ctrl+F5) or check that all files were uploaded.')}</div>`);
+      }
+    }
 
     try {
       await loadDashboard();
@@ -121,10 +131,13 @@
       createBookingPoll(() => loadDashboard({ background: true }));
 
       const { initAdminEnhancements } = await import('/assets/js/layout/animations.js');
-      await initAdminEnhancements();
+      await initAdminEnhancements().catch((err) => {
+        console.warn('[dashboard] Enhancements skipped:', err);
+        revealPageContent();
+      });
     } catch (err) {
       const mount = document.getElementById('page-content');
-      if (mount) {
+      if (mount && !mount.querySelector('.bg-rose-50')) {
         mount.insertAdjacentHTML('afterbegin',
           `<div class="bg-rose-50 text-rose-700 border border-rose-200 rounded-lg px-4 py-3 text-sm mb-4">${escapeHtml(err.message || 'Failed to load dashboard data.')}</div>`);
       }

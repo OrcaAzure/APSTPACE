@@ -262,6 +262,7 @@ export function validateVenueCapacityClient(space, guestCount) {
   return null;
 }
 
+/**
  * Client-side minimum-hours check (mirrors server validateVenueDuration).
  * @param {{ min_hours?: number|null, minHours?: number|null, package_name?: string, item?: string }} space
  * @param {{ enforceMinHours?: boolean }} [options] — false for admin venue bookings

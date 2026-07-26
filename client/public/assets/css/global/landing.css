@@ -1780,7 +1780,9 @@ body.lp-scroll-snap-active .lp-section-scroller {
   }
 
   .lp-hero {
-    min-height: auto;
+    min-height: 100svh;
+    min-height: 100dvh;
+    height: auto;
     align-items: flex-start;
     padding-bottom: 2rem;
   }
@@ -2038,7 +2040,6 @@ body.lp-scroll-snap-active .lp-section-scroller {
 
   @media (max-width: 767px) {
     .lp-hero {
-      min-height: auto;
       height: auto;
     }
   }

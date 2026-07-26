@@ -4,6 +4,9 @@
 
 import { LANDING_AMENITY_IMAGE } from '/assets/js/features/facility-display.js';
 
+/** Bust cache for landing.js — keep in sync with landing-boot.js */
+export const LANDING_SCRIPT_V = 'hero-carousel5';
+
 const PARTIALS = {
   heroPublic: '/components/landing-hero-public.html',
   heroGuest: '/components/landing-hero-guest.html',
@@ -114,6 +117,8 @@ export async function mountPublicLandingContent() {
   if (!mount || mount.dataset.landingMounted === '1') return mount;
   mount.innerHTML = await buildLandingContent({ variant: 'public' });
   mount.dataset.landingMounted = '1';
+  const { ensureHeroBackgroundCarousel } = await import(`/assets/js/layout/landing.js?v=${LANDING_SCRIPT_V}`);
+  ensureHeroBackgroundCarousel();
   const { loadSupportContact } = await import('/assets/js/features/support-contact.js');
   loadSupportContact(mount).catch(() => {});
   return mount;

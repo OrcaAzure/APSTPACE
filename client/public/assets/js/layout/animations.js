@@ -174,22 +174,26 @@ export async function animateCountUp(element, displayText, options = {}) {
     return;
   }
 
-  const gsap = await loadGsap();
-  const state = { val: 0 };
-  gsap.to(state, {
-    val: numeric,
-    duration: options.duration ?? 1.1,
-    ease: EASE.smooth,
-    onUpdate: () => {
-      const rounded = Number.isInteger(numeric)
-        ? Math.round(state.val)
-        : Math.round(state.val * 10) / 10;
-      element.textContent = `${prefix}${rounded}${suffix}`;
-    },
-    onComplete: () => {
-      element.textContent = displayText;
-    },
-  });
+  try {
+    const gsap = await loadGsap();
+    const state = { val: 0 };
+    gsap.to(state, {
+      val: numeric,
+      duration: options.duration ?? 1.1,
+      ease: EASE.smooth,
+      onUpdate: () => {
+        const rounded = Number.isInteger(numeric)
+          ? Math.round(state.val)
+          : Math.round(state.val * 10) / 10;
+        element.textContent = `${prefix}${rounded}${suffix}`;
+      },
+      onComplete: () => {
+        element.textContent = displayText;
+      },
+    });
+  } catch {
+    element.textContent = displayText;
+  }
 }
 
 /** Chart bars — slow ease upward. */

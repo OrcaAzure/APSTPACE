@@ -725,8 +725,14 @@ function renderBody() {
   if (state.step === 2) bindStep2();
 }
 
+function normalizeOptionalContactEmail(value) {
+  const trimmed = String(value ?? '').trim();
+  return trimmed || '';
+}
+
 function validateStep1() {
   if (!state.guestName && !state.userId) return 'Please enter a guest name.';
+  state.email = normalizeOptionalContactEmail(state.email);
   if (isInvalidOptionalEmail(state.email)) {
     return 'Please enter a valid email address, or leave the field blank.';
   }
@@ -860,7 +866,7 @@ async function confirmSave() {
       notes: combinedNotes,
       user_id: state.userId ? Number(state.userId) : null,
       guest_name: state.guestName,
-      email: state.email || null,
+      email: normalizeOptionalContactEmail(state.email) || null,
       contact_phone: state.contactPhone || null,
       status: state.modifyRequest ? 'Approved' : (state.originalStatus || 'Approved'),
       modification_message: state.modifyRequest ? state.guestMessage?.trim() : undefined,

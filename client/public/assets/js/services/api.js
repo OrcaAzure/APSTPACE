@@ -4,7 +4,7 @@
 export const API_URL = `${window.location.origin}/api`;
 
 export async function apiRequest(endpoint, options = {}) {
-  const { skipAuthRedirect = false, ...fetchOptions } = options;
+  const { skipAuthRedirect = false, timeoutMs = 0, ...fetchOptions } = options;
   const hasBody = fetchOptions.body != null && fetchOptions.body !== '';
   const headers = {
     ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
@@ -12,14 +12,25 @@ export async function apiRequest(endpoint, options = {}) {
   };
 
   let response;
+  const controller = timeoutMs > 0 ? new AbortController() : null;
+  const timer = controller
+    ? window.setTimeout(() => controller.abort(), timeoutMs)
+    : null;
+
   try {
     response = await fetch(`${API_URL}${endpoint}`, {
       ...fetchOptions,
       headers,
       credentials: 'include',
+      signal: controller?.signal,
     });
-  } catch {
+  } catch (err) {
+    if (err?.name === 'AbortError') {
+      throw new Error('Request timed out — the server is taking too long. Try again or check that Node.js and MySQL are running.');
+    }
     throw new Error('Network error — could not reach the server. Check your connection and try again.');
+  } finally {
+    if (timer) window.clearTimeout(timer);
   }
 
   let data = null;
@@ -105,7 +116,7 @@ export async function changePassword(payload) {
 }
 
 export async function getAdminSummary() {
-  return apiRequest('/stats/summary');
+  return apiRequest('/stats/summary', { timeoutMs: 20000 });
 }
 
 export async function getNotifications() {

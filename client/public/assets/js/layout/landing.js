@@ -123,6 +123,16 @@ function initHeroBackgroundCarousel() {
   if (!hero || !carousel || hero.querySelector('[data-hero-carousel-ui]')) return () => {};
 
   const slides = [...carousel.querySelectorAll('.lp-hero-bg-slide')];
+  if (!slides.length) return () => {};
+
+  let index = slides.findIndex((slide) => slide.classList.contains('is-active'));
+  if (index < 0) {
+    index = 0;
+    slides.forEach((slide, slideIndex) => {
+      slide.classList.toggle('is-active', slideIndex === 0);
+    });
+  }
+
   if (slides.length <= 1) return () => {};
 
   slides.forEach((slide, slideIndex) => {
@@ -131,9 +141,6 @@ function initHeroBackgroundCarousel() {
       preloadHeroSlideImage(url);
     }
   });
-
-  let index = slides.findIndex((slide) => slide.classList.contains('is-active'));
-  if (index < 0) index = 0;
 
   let timerId = 0;
   let paused = document.visibilityState === 'hidden';
@@ -252,6 +259,15 @@ function initHeroBackgroundCarousel() {
     document.removeEventListener('visibilitychange', onVisibility);
     ui.remove();
   };
+}
+
+let heroCarouselCleanup = null;
+
+/** Idempotent — safe after async landing content mount or if init ran before #hero existed. */
+export function ensureHeroBackgroundCarousel() {
+  if (document.querySelector('[data-hero-carousel-ui]')) return;
+  heroCarouselCleanup?.();
+  heroCarouselCleanup = initHeroBackgroundCarousel();
 }
 
 function loadScript(src, timeoutMs = 12000) {
@@ -1353,6 +1369,27 @@ function animateCountersHandoff(gsap) {
 let landingPageInitialized = false;
 let scrollShowcaseMounted = false;
 
+/** Mount explore showcase when reveal/animation path was skipped or failed. */
+export function ensureScrollShowcase() {
+  const section = document.querySelector('.lp-scroll-section');
+  if (!section) return;
+  if (!scrollShowcaseMounted) {
+    mountScrollShowcase(window.gsap || null, window.ScrollTrigger || null);
+    return;
+  }
+  section.classList.remove('is-pending-init');
+  if (!section.classList.contains('is-ready')) {
+    section.classList.add('is-ready');
+  }
+}
+
+export function revealLandingFallback() {
+  revealStatic();
+  ensureHeroBackgroundCarousel();
+  ensureScrollShowcase();
+  setCountersStatic();
+}
+
 function mountScrollShowcase(gsap, ScrollTrigger) {
   if (scrollShowcaseMounted) return;
   scrollShowcaseMounted = true;
@@ -1530,7 +1567,7 @@ function buildLandingReveal(startHeroHandoff, finalize) {
 
 export async function initLandingPage(options = {}) {
   if (landingPageInitialized) {
-    return () => { revealStatic(); };
+    return () => { revealLandingFallback(); };
   }
   landingPageInitialized = true;
 
@@ -1540,7 +1577,7 @@ export async function initLandingPage(options = {}) {
   initNavSpy();
   initMobileMenu();
   initHeroTypewriter();
-  initHeroBackgroundCarousel();
+  ensureHeroBackgroundCarousel();
 
   document.querySelectorAll('.lp-facility-card img').forEach((img) => {
     img.addEventListener('error', () => {
